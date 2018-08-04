@@ -1,5 +1,9 @@
 # keras-yolo3
 
+## Note from michhar
+
+This is a fork/modification of the excellent project https://github.com/qqwweee/keras-yolo3 - see that repo for the latest updates in original codebase.
+
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](LICENSE)
 
 ## Introduction
@@ -18,36 +22,14 @@ A Keras implementation of YOLOv3 (Tensorflow backend) inspired by [allanzelener/
 ```
 wget https://pjreddie.com/media/files/yolov3.weights
 python convert.py yolov3.cfg yolov3.weights model_data/yolo.h5
-python yolo_video.py [OPTIONS...] --image, for image detection mode, OR
-python yolo_video.py [video_path] [output_path (optional)]
+python yolo.py   OR   python yolo_video.py [video_path] [output_path(optional)]
 ```
 
-For Tiny YOLOv3, just do in a similar way, just specify model path and anchor path with `--model model_file` and `--anchors anchor_file`.
+For Tiny YOLOv3, just do in a similar way. And modify model path and anchor path in yolo.py.
 
-### Usage
-Use --help to see usage of yolo_video.py:
-```
-usage: yolo_video.py [-h] [--model MODEL] [--anchors ANCHORS]
-                     [--classes CLASSES] [--gpu_num GPU_NUM] [--image]
-                     [--input] [--output]
-
-positional arguments:
-  --input        Video input path
-  --output       Video output path
-
-optional arguments:
-  -h, --help         show this help message and exit
-  --model MODEL      path to model weight file, default model_data/yolo.h5
-  --anchors ANCHORS  path to anchor definitions, default
-                     model_data/yolo_anchors.txt
-  --classes CLASSES  path to class definitions, default
-                     model_data/coco_classes.txt
-  --gpu_num GPU_NUM  Number of GPU to use, default 1
-  --image            Image detection mode, will ignore all positional arguments
-```
 ---
 
-4. MultiGPU usage: use `--gpu_num N` to use N GPUs. It is passed to the [Keras multi_gpu_model()](https://keras.io/utils/#multi_gpu_model).
+4. MultiGPU usage is an optional. Change the number of gpu and add gpu device id.
 
 ## Training
 
@@ -63,13 +45,15 @@ optional arguments:
     ...
     ```
 
+* VoTT tool with export to voc format was used, then `voc_annotation.py` to get the necessary list files (michhar's note) - https://github.com/Microsoft/VoTT
+
 2. Make sure you have run `python convert.py -w yolov3.cfg yolov3.weights model_data/yolo_weights.h5`  
     The file model_data/yolo_weights.h5 is used to load pretrained weights.
 
-3. Modify train.py and start training.  
+3. Modify train.py with paths to your model and data then start training.  
     `python train.py`  
-    Use your trained weights or checkpoint weights with command line option `--model model_file` when using yolo_video.py
-    Remember to modify class path or anchor path, with `--classes class_file` and `--anchors anchor_file`.
+    Use your trained weights or checkpoint weights in yolo.py.  
+    Remember to modify class path or anchor path.
 
 If you want to use original pretrained weights for YOLOv3:  
     1. `wget https://pjreddie.com/media/files/darknet53.conv.74`  
@@ -81,12 +65,12 @@ If you want to use original pretrained weights for YOLOv3:
 
 ## Some issues to know
 
-1. The test environment is
-    - Python 3.5.2
-    - Keras 2.1.5
-    - tensorflow 1.6.0
+1. The test environment is (michhar's)
+    - Python 3.6.6
+    - Keras 2.2.2
+    - tensorflow 1.9.0
 
-2. Default anchors are used. If you use your own anchors, probably some changes are needed.
+2. Default anchors can be used. If you use your own anchors, probably some changes are needed (using `model_data/yolo_tiny_anchors.txt`).
 
 3. The inference result is not totally the same as Darknet but the difference is small.
 

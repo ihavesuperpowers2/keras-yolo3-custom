@@ -4,6 +4,10 @@
 
 This is a fork/modification of the excellent project https://github.com/qqwweee/keras-yolo3 - see that repo for the latest updates in original codebase.
 
+Additions:
+* You will see a note in the training instructions about using [VoTT](https://github.com/Microsoft/VoTT) to annotate data - make sure to export tags as **TensorFlow Pascal VOC** and place `ImageSets`, `Annotations` and `JPEGImages` folders under the `voc` repo folder so the training script can find the data.
+* Update `keras`, `tensorflow` and Python versions.
+
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](LICENSE)
 
 ## Introduction

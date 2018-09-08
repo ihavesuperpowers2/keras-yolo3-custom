@@ -18,25 +18,30 @@ gpu_num=1
 
 def _main():
     # TODO: read from cfg file or import static vars from separate config file
-    annotation_path = 'helmet_train.txt'
-    log_dir = 'logs/002/'
-    classes_path = 'model_data/yolo_minifig_classes.txt'
-    anchors_path = 'model_data/yolo_tiny_anchors.txt'
+    annotation_path = os.getcwd() + os.sep + 'obj_train_list.txt'
+    # Where resulting checkpoints and models are stored
+    log_dir = os.getcwd() + os.sep + 'logs/001/'
+    # User input
+    weights_path = os.getcwd() + os.sep + 'model_data/yolov3-tiny.h5'
+    classes_path = os.getcwd() + os.sep + 'model_data/yolo_custom_classes.txt'
+    anchors_path = os.getcwd() + os.sep + 'model_data/yolo_tiny_anchors_v2.txt'
     class_names = get_classes(classes_path)
     num_classes = len(class_names)
     anchors = get_anchors(anchors_path)
     initial_lr = 1e-2
 
-    input_shape = (416,416) # multiple of 32, hw
+    # Image shape that input is updated to (multiple of 32)
+    input_shape = (416,416)
 
     is_tiny_version = len(anchors)==6 # default setting
-    # Transfer learning - all layers frozen except last 2
+    # Transfer learning - freeze last n layers
+    # Make sure you know what you freeze
     if is_tiny_version:
         model = create_tiny_model(input_shape, anchors, num_classes,
-            freeze_body=2, weights_path='logs/001/trained_weights_stage_loss153.7378.h5')
+            freeze_body=2, weights_path=weights_path)
     else:
         model = create_model(input_shape, anchors, num_classes,
-            freeze_body=2, weights_path='model_data/yolo_weights.h5') # make sure you know what you freeze
+            freeze_body=2, weights_path=weights_path)
 
     logging = TensorBoard(log_dir=log_dir)
     checkpoint = ModelCheckpoint(log_dir + 'ep{epoch:03d}-loss{loss:.3f}-val_loss{val_loss:.3f}.h5',
@@ -62,12 +67,13 @@ def _main():
 
         batch_size = 16
         print('Train on {} samples, val on {} samples, with batch size {}.'.format(num_train, num_val, batch_size))
-        model.fit_generator(data_generator_wrapper(lines[:num_train], batch_size, input_shape, anchors, num_classes),
+        model.fit_generator(data_generator_wrapper([os.getcwd() + os.sep + x for x in lines[:num_train]], batch_size, input_shape, anchors, num_classes),
                 steps_per_epoch=max(1, num_train//batch_size),
-                validation_data=data_generator_wrapper(lines[num_train:], batch_size, input_shape, anchors, num_classes),
+                validation_data=data_generator_wrapper([os.getcwd() + os.sep + x for x in lines[num_train:]], batch_size, input_shape, anchors, num_classes),
                 validation_steps=max(1, num_val//batch_size),
                 epochs=500,
                 initial_epoch=0,
+                shuffle=True,
                 callbacks=[logging, checkpoint])
         model.save_weights(log_dir + 'trained_weights_stage_1.h5')
 
@@ -81,12 +87,13 @@ def _main():
 
         batch_size = 16 # note that more GPU memory is required after unfreezing the body
         print('Train on {} samples, val on {} samples, with batch size {}.'.format(num_train, num_val, batch_size))
-        model.fit_generator(data_generator_wrapper(lines[:num_train], batch_size, input_shape, anchors, num_classes),
+        model.fit_generator(data_generator_wrapper([os.getcwd() + os.sep + x for x in lines[:num_train]], batch_size, input_shape, anchors, num_classes),
             steps_per_epoch=max(1, num_train//batch_size),
-            validation_data=data_generator_wrapper(lines[num_train:], batch_size, input_shape, anchors, num_classes),
+            validation_data=data_generator_wrapper([os.getcwd() + os.sep + x  for x in lines[num_train:]], batch_size, input_shape, anchors, num_classes),
             validation_steps=max(1, num_val//batch_size),
             epochs=1000,
             initial_epoch=500,
+            shuffle=True,
             callbacks=[logging, checkpoint, reduce_lr, early_stopping])
         model.save_weights(log_dir + 'trained_weights_final.h5')
 

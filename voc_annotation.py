@@ -1,9 +1,9 @@
 import xml.etree.ElementTree as ET
 from os import getcwd
 
-sets=[('helmet_train'), ('helmet_val'), ('no_helmet_train'), ('no_helmet_val')]
+sets=[('obj_train'), ('obj_test'), ('no_obj_train'), ('no_obj_test')]
 
-classes = ["helmet", "no_helmet"]
+classes = ["obj", "no_obj"]
 
 
 def convert_annotation(image_id, list_file):
@@ -30,7 +30,7 @@ for image_set in sets:
             image_ids.append(line.strip().split()[0])
             
     # image_ids = open('voc/ImageSets/Main/%s.txt'%(image_set)).read().strip().split()
-    list_file = open('%s_%s.txt'%('_list', image_set), 'w')
+    list_file = open('%s_%s.txt'%('voc/_list', image_set), 'w')
     for image_id in image_ids:
         list_file.write('voc/JPEGImages/%s.jpg'%(image_id))
         convert_annotation(image_id, list_file)

@@ -1,6 +1,7 @@
+#! /usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Class definition of YOLO_v3 style detection model on image and video
+Run a YOLO_v3 style detection model on test images.
 """
 
 import colorsys
@@ -16,36 +17,33 @@ from PIL import Image, ImageFont, ImageDraw
 from yolo3.model import yolo_eval, yolo_body, tiny_yolo_body
 from yolo3.utils import letterbox_image
 import os
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 from keras.utils import multi_gpu_model
+gpu_num=1
+
+# User to modify in __init__:
+# * Base model path
+# * Anchors path
+# * Class names path
+# * model image size
 
 class YOLO(object):
-    # Model path or trained weights path (for base model and 
-    # New model stored under logs/<name you chose below>)
-    # Anchors path is a file with set anchors
-    # Class names path is a file with class names - one per line
-    _defaults = {
-        "model_path": os.getcwd() + os.sep + 'logs/001/kerasyolo.h5',
-        "anchors_path": os.getcwd() + os.sep + 'model_data/yolo_tiny_anchors_v1.txt',
-        "classes_path": os.getcwd() + os.sep + 'model_data/yolo_custom_classes.txt',
-        "score" : 0.3,
-        "iou" : 0.45,
-        "model_image_size" : (416, 416),
-        "gpu_num" : 1,
-    }
-
-    @classmethod
-    def get_defaults(cls, n):
-        if n in cls._defaults:
-            return cls._defaults[n]
-        else:
-            return "Unrecognized attribute name '" + n + "'"
-
-    def __init__(self, **kwargs):
-        self.__dict__.update(self._defaults) # set up default values
-        self.__dict__.update(kwargs) # and update with user overrides
+    def __init__(self):
+        # Model path or trained weights path (for base model and 
+        # new models stored under logs/<name you choose below>)
+        self.model_path = 'logs/002/ep510-loss18.510-val_loss16.429.h5'
+        # Anchors path
+        self.anchors_path = 'model_data/yolo_tiny_anchors.txt'
+        # Class names path (file with class - one per line)
+        self.classes_path = 'model_data/yolo_custom_classes.txt'
+        self.score = 0.3
+        self.iou = 0.45
         self.class_names = self._get_class()
         self.anchors = self._get_anchors()
         self.sess = K.get_session()
+        # Fixed size for input image (resized here) or 
+        # try (None, None) - can be modified
+        self.model_image_size = (416, 416) 
         self.boxes, self.scores, self.classes = self.generate()
 
     def _get_class(self):
@@ -65,8 +63,6 @@ class YOLO(object):
     def generate(self):
         model_path = os.path.expanduser(self.model_path)
         assert model_path.endswith('.h5'), 'Keras model or weights must be a .h5 file.'
-
-        print(model_path)
 
         # Load model, or construct model and load weights.
         num_anchors = len(self.anchors)
@@ -98,8 +94,8 @@ class YOLO(object):
 
         # Generate output tensor targets for filtered bounding boxes.
         self.input_image_shape = K.placeholder(shape=(2, ))
-        if self.gpu_num>=2:
-            self.yolo_model = multi_gpu_model(self.yolo_model, gpus=self.gpu_num)
+        if gpu_num>=2:
+            self.yolo_model = multi_gpu_model(self.yolo_model, gpus=gpu_num)
         boxes, scores, classes = yolo_eval(self.yolo_model.output, self.anchors,
                 len(self.class_names), self.input_image_shape,
                 score_threshold=self.score, iou_threshold=self.iou)
@@ -175,6 +171,7 @@ class YOLO(object):
     def close_session(self):
         self.sess.close()
 
+
 def detect_video(yolo, video_path=0, output_path=""):
     import cv2
     vid = cv2.VideoCapture(video_path)
@@ -215,3 +212,22 @@ def detect_video(yolo, video_path=0, output_path=""):
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
     yolo.close_session()
+
+
+def detect_img(yolo):
+    while True:
+        img = input('Input image filename:')
+        try:
+            image = Image.open(img)
+        except:
+            print('Open Error! Try again!')
+            continue
+        else:
+            r_image = yolo.detect_image(image)
+            r_image.show()
+    yolo.close_session()
+
+
+
+if __name__ == '__main__':
+    detect_img(YOLO())

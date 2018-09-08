@@ -1,13 +1,15 @@
 import xml.etree.ElementTree as ET
 from os import getcwd
+import os
+import glob
 
-sets=[('obj_train'), ('obj_test'), ('no_obj_train'), ('no_obj_test')]
+sets=[('obj_train'), ('obj_val'), ('no_obj_train'), ('no_obj_val')]
 
 classes = ["obj", "no_obj"]
 
 
-def convert_annotation(image_id, list_file):
-    in_file = open('voc/Annotations/%s.xml'%(image_id))
+def convert_annotation(image_id):
+    in_file = open('%s.xml'%(image_id).replace('JPEGImages', 'Annotations'))
     tree=ET.parse(in_file)
     root = tree.getroot()
 
@@ -19,21 +21,15 @@ def convert_annotation(image_id, list_file):
         cls_id = classes.index(cls)
         xmlbox = obj.find('bndbox')
         b = (int(xmlbox.find('xmin').text), int(xmlbox.find('ymin').text), int(xmlbox.find('xmax').text), int(xmlbox.find('ymax').text))
-        list_file.write(" " + ",".join([str(a) for a in b]) + ',' + str(cls_id))
+        # list_file.write(" " + ",".join([str(a) for a in b]) + ',' + str(cls_id))
+        return " " + ",".join([str(a) for a in b]) + ',' + str(cls_id)
 
 wd = getcwd()
 
-for image_set in sets:
-    image_ids = []
-    with open('voc/ImageSets/Main/%s.txt'%(image_set)) as f:
-        for line in f:
-            image_ids.append(line.strip().split()[0])
-            
-    # image_ids = open('voc/ImageSets/Main/%s.txt'%(image_set)).read().strip().split()
-    list_file = open('%s_%s.txt'%('voc/_list', image_set), 'w')
-    for image_id in image_ids:
-        list_file.write('voc/JPEGImages/%s.jpg'%(image_id))
-        convert_annotation(image_id, list_file)
-        list_file.write('\n')
-    list_file.close()
+image_ids = glob.glob('voc' + os.sep + 'JPEGImages' + os.sep + '*.*')
+image_id_paths = [(image_id + \
+        ' ' + convert_annotation(image_id.split('.')[0]) + '\n') for image_id in image_ids]
+with open('voc/list_master.txt', 'w') as list_file:
+    list_file.write(''.join(list(image_id_paths)))
+
 

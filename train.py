@@ -18,13 +18,13 @@ gpu_num=1
 
 def _main():
     # TODO: read from cfg file or import static vars from separate config file
-    annotation_path = os.getcwd() + os.sep + 'obj_train_list.txt'
+    annotation_path = os.getcwd() + os.sep + 'voc' + os.sep + 'list_master.txt'
     # Where resulting checkpoints and models are stored
-    log_dir = os.getcwd() + os.sep + 'logs/001/'
+    log_dir = os.getcwd() + os.sep + 'logs/002/'
     # User input
-    weights_path = os.getcwd() + os.sep + 'model_data/yolov3-tiny.h5'
-    classes_path = os.getcwd() + os.sep + 'model_data/yolo_custom_classes.txt'
-    anchors_path = os.getcwd() + os.sep + 'model_data/yolo_tiny_anchors_v2.txt'
+    weights_path = os.path.join(os.getcwd(), 'model_data/yolov3-tiny.h5')
+    classes_path = os.path.join(os.getcwd(), 'model_data/yolo_custom_classes.txt')
+    anchors_path = os.path.join(os.getcwd(), 'model_data/yolo_tiny_anchors_v2.txt')
     class_names = get_classes(classes_path)
     num_classes = len(class_names)
     anchors = get_anchors(anchors_path)

@@ -24,7 +24,7 @@ class YOLO(object):
     # Anchors path is a file with set anchors
     # Class names path is a file with class names - one per line
     _defaults = {
-        "model_path": os.getcwd() + os.sep + 'logs/001/kerasyolo.h5',
+        "model_path": os.getcwd() + os.sep + 'logs/001/trained_weights_final.h5',
         "anchors_path": os.getcwd() + os.sep + 'model_data/yolo_tiny_anchors_v1.txt',
         "classes_path": os.getcwd() + os.sep + 'model_data/yolo_custom_classes.txt',
         "score" : 0.3,

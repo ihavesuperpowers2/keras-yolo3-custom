@@ -20,17 +20,18 @@ def _main():
     # TODO: read from cfg file or import static vars from separate config file
     annotation_path = os.getcwd() + os.sep + 'voc' + os.sep + 'list_master.txt'
     # Where resulting checkpoints and models are stored
-    log_dir = os.getcwd() + os.sep + 'logs/002/'
+    log_dir = os.getcwd() + os.sep + 'logs/003/'
     # User input
-    weights_path = os.path.join(os.getcwd(), 'model_data/yolov3-tiny.h5')
+    # weights_path = os.path.join(os.getcwd(), 'logs/001/ep501-loss30.267-val_loss37.992.h5')
+    weights_path = os.path.join(os.getcwd(), 'model_data/kerasyolo.h5')
     classes_path = os.path.join(os.getcwd(), 'model_data/yolo_custom_classes.txt')
-    anchors_path = os.path.join(os.getcwd(), 'model_data/yolo_tiny_anchors_v2.txt')
+    anchors_path = os.path.join(os.getcwd(), 'model_data/yolo_tiny_anchors_v1.txt')
     class_names = get_classes(classes_path)
     num_classes = len(class_names)
     anchors = get_anchors(anchors_path)
     initial_lr = 1e-2
 
-    # Image shape that input is updated to (multiple of 32)
+    # Model mage shape (multiple of 32)
     input_shape = (416,416)
 
     is_tiny_version = len(anchors)==6 # default setting
@@ -71,7 +72,7 @@ def _main():
                 steps_per_epoch=max(1, num_train//batch_size),
                 validation_data=data_generator_wrapper([os.getcwd() + os.sep + x for x in lines[num_train:]], batch_size, input_shape, anchors, num_classes),
                 validation_steps=max(1, num_val//batch_size),
-                epochs=500,
+                epochs=100,
                 initial_epoch=0,
                 shuffle=True,
                 callbacks=[logging, checkpoint])
@@ -91,8 +92,8 @@ def _main():
             steps_per_epoch=max(1, num_train//batch_size),
             validation_data=data_generator_wrapper([os.getcwd() + os.sep + x  for x in lines[num_train:]], batch_size, input_shape, anchors, num_classes),
             validation_steps=max(1, num_val//batch_size),
-            epochs=1000,
-            initial_epoch=500,
+            epochs=500,
+            initial_epoch=100,
             shuffle=True,
             callbacks=[logging, checkpoint, reduce_lr, early_stopping])
         model.save_weights(log_dir + 'trained_weights_final.h5')

@@ -1,11 +1,18 @@
+"""
+Create anchors using Kmeans clustering on dataset.  Creates a text file
+to use during training.
+"""
+
 import numpy as np
+import argparse
 
 
 class YOLO_Kmeans:
 
-    def __init__(self, cluster_number, filename):
+    def __init__(self, cluster_number, annot_file, out_file):
         self.cluster_number = cluster_number
-        self.filename = "2012_train.txt"
+        self.annot_file = annot_file
+        self.out_file = out_file
 
     def iou(self, boxes, clusters):  # 1 box -> k clusters
         n = boxes.shape[0]
@@ -58,7 +65,7 @@ class YOLO_Kmeans:
         return clusters
 
     def result2txt(self, data):
-        f = open("yolo_anchors.txt", 'w')
+        f = open(self.out_file, 'w')
         row = np.shape(data)[0]
         for i in range(row):
             if i == 0:
@@ -69,7 +76,7 @@ class YOLO_Kmeans:
         f.close()
 
     def txt2boxes(self):
-        f = open(self.filename, 'r')
+        f = open(self.annot_file, 'r')
         dataSet = []
         for line in f:
             infos = line.split(" ")
@@ -95,7 +102,32 @@ class YOLO_Kmeans:
 
 
 if __name__ == "__main__":
-    cluster_number = 9
-    filename = "2012_train.txt"
-    kmeans = YOLO_Kmeans(cluster_number, filename)
+
+    parser = argparse.ArgumentParser(argument_default=argparse.SUPPRESS)
+
+    # Command line options
+    parser.add_argument(
+        '--num_clusters', type=int,
+        default=9,
+        help='Number of desired clusters or anchors'
+    )
+
+    # Command line options
+    parser.add_argument(
+        '--annot_file', type=str,
+        help='Annotations file name (list of images and bboxes)'
+    )
+
+    parser.add_argument(
+        '--out_file', type=str,
+        default="yolo_anchors_custom.txt",
+        help='Output file name'
+    )
+
+    args = parser.parse_args()
+
+    cluster_number = args.num_clusters
+    annot_file = args.annot_file
+    out_file = args.out_file
+    kmeans = YOLO_Kmeans(cluster_number, annot_file, out_file)
     kmeans.txt2clusters()

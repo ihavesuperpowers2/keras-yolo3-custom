@@ -1,9 +1,17 @@
 """
-Retrain the YOLO model for your own dataset.
+Retrain the YOLO v3 model for your own dataset.
+
+Notes:
+* Base model weights can be downloaded with repo links and converted
+with "convert.py" to Keras format.
+* The VoTT tool was used to annotate and the "voc_annotation.py" script to
+convert for use by "train.py".
+* There are YOLOv3 and tiny YOLOv3 options.
+* Use "kmeans.py" to estimate anchors positions for the dataset and add to
+an anchors file e.g. "model_data/yolo_tiny_anchors.txt"
 
 Usage example:
-
-    python train.py --model model_data\yolov3-tiny-weights.h5 --gpu_num 1 --annot_path example_label_list.txt --class_path model_data\yolo_obj_classes.txt --anchors_path model_data\yolo_tiny_anchors.txt
+    python train.py --model model_data/yolov3-tiny-weights.h5 --gpu_num 1 --annot_path example_label_list.txt --class_path model_data/yolo_obj_classes.txt --anchors_path model_data/yolo_tiny_anchors.txt
 """
 
 import numpy as np
@@ -22,7 +30,7 @@ os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 from keras.utils import multi_gpu_model
 gpu_num=1
 
-def _main(model, gpu_num, annot_path, class_path, anchors_path):
+def main(model, gpu_num, annot_path, class_path, anchors_path):
     # TODO: read from cfg file or import static vars from separate config file
     annotation_path = annot_path
     log_dir = 'logs/007/'

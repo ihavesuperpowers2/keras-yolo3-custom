@@ -1,8 +1,8 @@
 item {
  id: 1
- name: 'obj'
+ name: 'helmet'
 }
 item {
  id: 2
- name: 'no_obj'
+ name: 'no_helmet'
 }

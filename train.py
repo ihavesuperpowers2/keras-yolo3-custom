@@ -1,48 +1,48 @@
 """
 Retrain the YOLO model for your own dataset.
+
+Usage example:
+
+    python train.py --model model_data\yolov3-tiny-weights.h5 --gpu_num 1 --annot_path example_label_list.txt --class_path model_data\yolo_obj_classes.txt --anchors_path model_data\yolo_tiny_anchors.txt
 """
 
 import numpy as np
+import argparse
 import keras.backend as K
 from keras.layers import Input, Lambda
 from keras.models import Model
 from keras.optimizers import Adam
 from keras.callbacks import TensorBoard, ModelCheckpoint, ReduceLROnPlateau, EarlyStopping
-
 from yolo3.model import preprocess_true_boxes, yolo_body, tiny_yolo_body, yolo_loss
 from yolo3.utils import get_random_data
+from yolo import YOLO
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+# Device location (can be 0)
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 from keras.utils import multi_gpu_model
 gpu_num=1
 
-def _main():
+def _main(model, gpu_num, annot_path, class_path, anchors_path):
     # TODO: read from cfg file or import static vars from separate config file
-    annotation_path = os.getcwd() + os.sep + 'voc' + os.sep + 'list_master.txt'
-    # Where resulting checkpoints and models are stored
-    log_dir = os.getcwd() + os.sep + 'logs/003/'
-    # User input
-    # weights_path = os.path.join(os.getcwd(), 'logs/001/ep501-loss30.267-val_loss37.992.h5')
-    weights_path = os.path.join(os.getcwd(), 'model_data/kerasyolo.h5')
-    classes_path = os.path.join(os.getcwd(), 'model_data/yolo_custom_classes.txt')
-    anchors_path = os.path.join(os.getcwd(), 'model_data/yolo_tiny_anchors_v1.txt')
+    annotation_path = annot_path
+    log_dir = 'logs/007/'
+    classes_path = class_path
+    anchors_path = anchors_path
     class_names = get_classes(classes_path)
     num_classes = len(class_names)
     anchors = get_anchors(anchors_path)
     initial_lr = 1e-2
 
-    # Model mage shape (multiple of 32)
-    input_shape = (416,416)
+    input_shape = (416,416) # multiple of 32, hw
 
     is_tiny_version = len(anchors)==6 # default setting
-    # Transfer learning - freeze last n layers
-    # Make sure you know what you freeze
+    # Transfer learning - all layers frozen except last 2
     if is_tiny_version:
         model = create_tiny_model(input_shape, anchors, num_classes,
-            freeze_body=2, weights_path=weights_path)
+            freeze_body=2, weights_path='model_data/yolov3-tiny-weights.h5')
     else:
         model = create_model(input_shape, anchors, num_classes,
-            freeze_body=2, weights_path=weights_path)
+            freeze_body=2, weights_path='model_data/yolo_weights.h5') # make sure you know what you freeze
 
     logging = TensorBoard(log_dir=log_dir)
     checkpoint = ModelCheckpoint(log_dir + 'ep{epoch:03d}-loss{loss:.3f}-val_loss{val_loss:.3f}.h5',
@@ -66,17 +66,19 @@ def _main():
             # use custom yolo_loss Lambda layer.
             'yolo_loss': lambda y_true, y_pred: y_pred})
 
-        batch_size = 16
+        batch_size = 4
         print('Train on {} samples, val on {} samples, with batch size {}.'.format(num_train, num_val, batch_size))
-        model.fit_generator(data_generator_wrapper([os.getcwd() + os.sep + x for x in lines[:num_train]], batch_size, input_shape, anchors, num_classes),
+        model.fit_generator(data_generator_wrapper(lines[:num_train], batch_size, input_shape, anchors, num_classes),
                 steps_per_epoch=max(1, num_train//batch_size),
-                validation_data=data_generator_wrapper([os.getcwd() + os.sep + x for x in lines[num_train:]], batch_size, input_shape, anchors, num_classes),
+                validation_data=data_generator_wrapper(lines[num_train:], batch_size, input_shape, anchors, num_classes),
                 validation_steps=max(1, num_val//batch_size),
-                epochs=100,
+                epochs=10,
                 initial_epoch=0,
-                shuffle=True,
                 callbacks=[logging, checkpoint])
         model.save_weights(log_dir + 'trained_weights_stage_1.h5')
+        # Save architecture, too
+        with open('trained_weights_stage_1.json', 'w') as f:
+            f.write(model.to_json())
 
     # Unfreeze and continue training, to fine-tune.
     # Train longer if the result is not good.
@@ -86,17 +88,19 @@ def _main():
         model.compile(optimizer=Adam(lr=initial_lr/10), loss={'yolo_loss': lambda y_true, y_pred: y_pred}) # recompile to apply the change
         print('Unfreeze all of the layers.')
 
-        batch_size = 16 # note that more GPU memory is required after unfreezing the body
+        batch_size = 4 # note that more GPU memory is required after unfreezing the body
         print('Train on {} samples, val on {} samples, with batch size {}.'.format(num_train, num_val, batch_size))
-        model.fit_generator(data_generator_wrapper([os.getcwd() + os.sep + x for x in lines[:num_train]], batch_size, input_shape, anchors, num_classes),
+        model.fit_generator(data_generator_wrapper(lines[:num_train], batch_size, input_shape, anchors, num_classes),
             steps_per_epoch=max(1, num_train//batch_size),
-            validation_data=data_generator_wrapper([os.getcwd() + os.sep + x  for x in lines[num_train:]], batch_size, input_shape, anchors, num_classes),
+            validation_data=data_generator_wrapper(lines[num_train:], batch_size, input_shape, anchors, num_classes),
             validation_steps=max(1, num_val//batch_size),
-            epochs=500,
-            initial_epoch=100,
-            shuffle=True,
+            epochs=10,
+            initial_epoch=20,
             callbacks=[logging, checkpoint, reduce_lr, early_stopping])
         model.save_weights(log_dir + 'trained_weights_final.h5')
+        # Save architecture, too
+        with open('trained_weights_final.json', 'w') as f:
+            f.write(model.to_json())
 
     # Further training if needed.
 
@@ -204,4 +208,38 @@ def data_generator_wrapper(annotation_lines, batch_size, input_shape, anchors, n
     return data_generator(annotation_lines, batch_size, input_shape, anchors, num_classes)
 
 if __name__ == '__main__':
-    _main()
+
+    parser = argparse.ArgumentParser(argument_default=argparse.SUPPRESS)
+
+    # Command line options
+    parser.add_argument(
+        '--model', type=str,
+        help='path to model weight file, default ' + YOLO.get_defaults("model_path")
+    )
+
+    parser.add_argument(
+        '--gpu_num', type=int,
+        help='Number of GPU to use, default ' + str(YOLO.get_defaults("gpu_num"))
+    )
+
+    parser.add_argument(
+        '--annot_path', type=str,
+        help='Annotation file with image location and bboxes'
+    )
+
+    parser.add_argument(
+        '--class_path', type=str,
+        help='Text file with class names one per line'
+    )
+
+    parser.add_argument(
+        '--anchors_path', type=str,
+        help='Text file with anchor positions, comma separated, on one line.'
+    )
+
+
+    args = parser.parse_args()
+
+    main(model=args.model, gpu_num=args.gpu_num,
+          annot_path=args.annot_path, class_path=args.class_path,
+          anchors_path=args.anchors_path)

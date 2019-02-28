@@ -19,14 +19,10 @@ import os
 from keras.utils import multi_gpu_model
 
 class YOLO(object):
-    # Model path or trained weights path (for base model and 
-    # New model stored under logs/<name you chose below>)
-    # Anchors path is a file with set anchors
-    # Class names path is a file with class names - one per line
     _defaults = {
-        "model_path": os.getcwd() + os.sep + 'model_data/kerasyolo.h5',
-        "anchors_path": os.getcwd() + os.sep + 'model_data/yolo_tiny_anchors_v1.txt',
-        "classes_path": os.getcwd() + os.sep + 'model_data/yolo_custom_classes.txt',
+        "model_path": 'model_data/yolo.h5',
+        "anchors_path": 'model_data/yolo_anchors.txt',
+        "classes_path": 'model_data/coco_classes.txt',
         "score" : 0.3,
         "iou" : 0.45,
         "model_image_size" : (416, 416),
@@ -66,22 +62,19 @@ class YOLO(object):
         model_path = os.path.expanduser(self.model_path)
         assert model_path.endswith('.h5'), 'Keras model or weights must be a .h5 file.'
 
-        print(model_path)
-
         # Load model, or construct model and load weights.
         num_anchors = len(self.anchors)
         num_classes = len(self.class_names)
         is_tiny_version = num_anchors==6 # default setting
-        try:
+        if not is_tiny_version:
             self.yolo_model = load_model(model_path, compile=False)
-        except:
-            self.yolo_model = tiny_yolo_body(Input(shape=(None,None,3)), num_anchors//2, num_classes) \
-                if is_tiny_version else yolo_body(Input(shape=(None,None,3)), num_anchors//3, num_classes)
-            self.yolo_model.load_weights(self.model_path) # make sure model, anchors and classes match
         else:
-            assert self.yolo_model.layers[-1].output_shape[-1] == \
-                num_anchors/len(self.yolo_model.output) * (num_classes + 5), \
-                'Mismatch between model and given anchor and class sizes'
+            self.yolo_model = tiny_yolo_body(Input(shape=(None, None, 3)), num_anchors//2, num_classes)         
+        self.yolo_model.load_weights(self.model_path) # make sure model, anchors and classes match
+
+        assert self.yolo_model.layers[-1].output_shape[-1] == \
+            num_anchors/len(self.yolo_model.output) * (num_classes + 5), \
+            'Mismatch between model and given anchor and class sizes'
 
         print('{} model, anchors, and classes loaded.'.format(model_path))
 
@@ -175,7 +168,7 @@ class YOLO(object):
     def close_session(self):
         self.sess.close()
 
-def detect_video(yolo, video_path=0, output_path=""):
+def detect_video(yolo, video_path, output_path=""):
     import cv2
     vid = cv2.VideoCapture(video_path)
     if not vid.isOpened():

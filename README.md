@@ -4,11 +4,16 @@
 
 This is a fork/modification of the excellent project https://github.com/qqwweee/keras-yolo3 - see that repo for the latest updates in original codebase.
 
-Additions:
-* You will see a note in the training instructions about using [VoTT](https://github.com/Microsoft/VoTT) to annotate data - make sure to export tags as **TensorFlow Pascal VOC** and place `ImageSets`, `Annotations` and `JPEGImages` folders under the `voc` repo folder so the training script can find the data.
-* Update `keras`, `tensorflow` and Python versions.
-
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](LICENSE)
+
+## System
+
+This codebase has be tested with:
+
+- CUDA 9.0
+- cuDNN 7.1
+- Windows 10
+- NVIDIA GPU GTX 1060
 
 ## Introduction
 
@@ -29,11 +34,7 @@ python convert.py yolov3.cfg yolov3.weights model_data/yolo.h5
 python yolo.py   OR   python yolo_video.py [video_path] [output_path(optional)]
 ```
 
-### Tiny YOLOv3
-
-Tiny YOLOv3 `yolo3-tiny.cfg` config is based on the Darknet [reference network](http://pjreddie.com/darknet/imagenet/#reference). You should already have this config file in the `experiment/` subdirectory.  Download the pretrained weights [here (34 MB)](https://pjreddie.com/media/files/yolov3-tiny.weights) and place in `model_data/` subdirectory.
-
-> Note:  for custom experiment you may need to modify the `cfg` file
+For Tiny YOLOv3, just do in a similar way. And modify model path and anchor path in yolo.py.
 
 ---
 
@@ -41,49 +42,42 @@ Tiny YOLOv3 `yolo3-tiny.cfg` config is based on the Darknet [reference network](
 
 ## Training
 
-1. Use [VoTT tool](https://github.com/Microsoft/VoTT) with export to voc format, then `voc_annotation.py` to get the necessary list files (michhar's note) - https://github.com/Microsoft/VoTT.
-
-  * Save the images and annotations from VoTT as **Tensorflow (PascalVOC)** into the `voc` subdirectory.
-  * Generate your own annotation file and class names file by running `python voc_annotation.py`
-    * One row for one image;  
-    * Row format: `image_file_path box1 box2 ... boxN`;  
-    * Box format: `x_min,y_min,x_max,y_max,class_id` (no space).  
-    * For VOC dataset, try `python voc_annotation.py`  
-    * Here is an example:
-
+1. Generate your own annotation file and class names file.  
+    One row for one image;  
+    Row format: `image_file_path box1 box2 ... boxN`;  
+    Box format: `x_min,y_min,x_max,y_max,class_id` (no space).  
+    For VOC dataset, try `python voc_annotation.py`  
+    Here is an example:
     ```
     path/to/img1.jpg 50,100,150,200,0 30,50,200,120,3
     path/to/img2.jpg 120,300,250,600,2
     ...
     ```
 
-    * Long story short, the annotation path txt file should include the image path and groud truth boxes, plus label as shown above.
+* VoTT tool with export to voc format was used, then `voc_annotation.py` to get the necessary list files (michhar's note) - https://github.com/Microsoft/VoTT
 
-2. Make sure you have run `python convert.py experiment/yolov3_tiny_custom.cfg model_data/yolov3-tiny.weights model_data/yolov3-tiny.h5` to create the keras-friendly model from Darknet weights.
-    * When converting, for a custom experiment, you may need to modify the config file (`<yolo something>.cfg`)
-    * The converted file `model_data/yolov3-tiny.h5` is used to load pretrained weights as the base model in a format `keras` understands. (a different base model may be used here)
+2. Make sure you have run `python convert.py -w yolov3.cfg yolov3.weights model_data/yolo_weights.h5`  
+    The file model_data/yolo_weights.h5 is used to load pretrained weights.
 
-3. Modify the `yolo.py` file if needed to point to custom model, anchors and class names (for custom experiment).
-
-4. Modify `train.py` with paths to your model and data then start training.  
+3. Modify train.py with paths to your model and data then start training.  
     `python train.py`  
-    * Make sure you are using your trained weights or checkpoint weights as base in `yolo.py` 
-    * Remember to modify class path or anchor path in both files (`yolo.py` and `train.py`)
+    Use your trained weights or checkpoint weights in yolo.py.  
+    Remember to modify class path or anchor path.
 
 If you want to use original pretrained weights for YOLOv3:  
     1. `wget https://pjreddie.com/media/files/darknet53.conv.74`  
-    2. Rename it as darknet53.weights  
+    2. rename it as darknet53.weights  
     3. `python convert.py -w darknet53.cfg darknet53.weights model_data/darknet53_weights.h5`  
-    4. Use `model_data/darknet53_weights.h5` path in `train.py`
+    4. use model_data/darknet53_weights.h5 in train.py
 
 ---
 
 ## Some issues to know
 
-1. The test environment is (for michhar)
-    - Python 3.6
+1. The test environment is (michhar's)
+    - Python 3.6.6
     - Keras 2.2.2
-    - tensorflow 1.8.0
+    - tensorflow 1.9.0
 
 2. Default anchors can be used. If you use your own anchors, probably some changes are needed (using `model_data/yolo_tiny_anchors.txt`).
 

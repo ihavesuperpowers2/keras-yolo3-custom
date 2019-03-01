@@ -1,10 +1,22 @@
-# keras-yolo3
-
-## Note from michhar
-
-This is a fork/modification of the excellent project https://github.com/qqwweee/keras-yolo3 - see that repo for the latest updates in original codebase.
+# Keras implementation of YOLO v3
 
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](LICENSE)
+
+YOLO stands for you only look once and is an algorithm for object detection.  See these papers for more information on this algorithm:
+
+![YOLO image](https://cdn-images-1.medium.com/max/1600/1*QOGcvHbrDZiCqTG6THIQ_w.png)
+
+Papers:
+
+* Original - https://arxiv.org/abs/1506.02640
+* 9000/v3 - https://arxiv.org/abs/1612.08242
+* v3 - https://arxiv.org/abs/1804.02767
+
+There are "tiny" versions of the architecture, often considered for embedded/constrained devices.
+
+Website:  https://pjreddie.com/darknet/yolo/ (provides information on a framework called Darknet)
+
+This repo converts a Darknet model to a Keras model and performs inference as well as provides a way to train on custom, labeled data.
 
 ## System
 
@@ -14,11 +26,11 @@ This codebase has be tested with:
 - cuDNN 7.1
 - Windows 10
 - NVIDIA GPU GTX 1060
+- Anaconda Python 3.6
 
 ## Introduction
 
 A Keras implementation of YOLOv3 (Tensorflow backend) inspired by [allanzelener/YAD2K](https://github.com/allanzelener/YAD2K).
-
 
 ---
 
@@ -65,7 +77,7 @@ For Tiny YOLOv3, just do in a similar way.
 
 4. MultiGPU usage is an optional. Change the number of gpu and add gpu device id.
 
-## Data
+## Data Prep
 
 Use the VoTT (<a href="https://github.com/Microsoft/VoTT">link</a>) labeling tool if using custom data and export to **Tensorflow Pascal VOC**.
 
@@ -83,7 +95,7 @@ Use the VoTT (<a href="https://github.com/Microsoft/VoTT">link</a>) labeling too
     ...
     ```
 
-* VoTT tool with export to voc format was used, then `voc_annotation.py` to get the necessary list files - https://github.com/Microsoft/VoTT
+* To get the necessary annotation files `voc_annotation.py` was used and then the files to be used for train were combined into one file, e.g. as in the `example_label_list.txt`.
 
 2. To convert the darknet format of weights to Keras format, make sure you have run the following using the proper config file
 

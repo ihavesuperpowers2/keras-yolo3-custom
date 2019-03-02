@@ -2,21 +2,40 @@
 
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](LICENSE)
 
-YOLO stands for you only look once and is an algorithm for object detection.  See these papers for more information on this algorithm:
+YOLO stands for you only look once and is an efficient algorithm for object detection.
 
 ![YOLO image](https://cdn-images-1.medium.com/max/1600/1*QOGcvHbrDZiCqTG6THIQ_w.png)
+<a href="https://medium.com/@jonathan_hui/real-time-object-detection-with-yolo-yolov2-28b1b93e2088" target="_blank" align="right">Image Source</a>
 
-Papers:
+Important papers on YOLO:
 
 * Original - https://arxiv.org/abs/1506.02640
-* 9000/v3 - https://arxiv.org/abs/1612.08242
+* 9000/v2 - https://arxiv.org/abs/1612.08242
 * v3 - https://arxiv.org/abs/1804.02767
 
 There are "tiny" versions of the architecture, often considered for embedded/constrained devices.
 
 Website:  https://pjreddie.com/darknet/yolo/ (provides information on a framework called Darknet)
 
-This repo converts a Darknet model to a Keras model and performs inference as well as provides a way to train on custom, labeled data.
+This implementation of YOLOv3 (Tensorflow backend) was inspired by [allanzelener/YAD2K](https://github.com/allanzelener/YAD2K).
+
+---
+
+## Updates Provided in This Fork
+
+* Option to **bring custom data and labels**
+* Parameterization of scripts
+* More detailed instructions and introductory material (above)
+
+## What You Do Here
+
+Using this repo you will perform some or all of the following:
+
+* Convert a Darknet model to a Keras model (and if custom setup, modify the config file with proper filter and class numbers)
+* Perform inference on video or image as a test ([quick-start](#quick-start))
+* Label data with a bounding box definition tool
+* Train a model on custom data using the converted custom Darknet model in Keras format (`.h5`)
+* Perform inference on custom model
 
 ## System
 
@@ -28,13 +47,7 @@ This codebase has be tested with:
 - NVIDIA GPU GTX 1060
 - Anaconda Python 3.6
 
-## Introduction
-
-A Keras implementation of YOLOv3 (Tensorflow backend) inspired by [allanzelener/YAD2K](https://github.com/allanzelener/YAD2K).
-
----
-
-## Quick Start
+## Quick Start (Inference Only)
 
 1. Download YOLOv3 weights from [YOLO website](http://pjreddie.com/darknet/yolo/).
 2. Convert the Darknet YOLO model to a Keras model.
@@ -45,7 +58,7 @@ wget https://pjreddie.com/media/files/yolov3.weights
 python convert.py yolov3.cfg yolov3.weights model_data/yolo.h5
 ```
 
-> For Tiny YOLOv3 download the weights from:  https://pjreddie.com/media/files/yolov3-tiny.weights
+> For tiny YOLOv3 download the weights from:  https://pjreddie.com/media/files/yolov3-tiny.weights
 
 Run on video or image file:
 
@@ -71,7 +84,7 @@ usage: yolo_video.py [-h] [--model_path MODEL_PATH]
   --output [OUTPUT]     [Optional] Video output path
 ```
 
-For Tiny YOLOv3, just do in a similar way.
+> For Tiny YOLOv3, just do in a similar way, except with tiny YOLOv3, converted weights.
 
 ---
 
@@ -83,12 +96,17 @@ Use the VoTT (<a href="https://github.com/Microsoft/VoTT">link</a>) labeling too
 
 ## Training
 
+IMPORTANT NOTES:
+
+* Make sure you have set up the config `.cfg` file correctly (`filters` and `classes`) - more information on how to do this <a href="https://github.com/AlexeyAB/darknet#how-to-train-to-detect-your-custom-objects" target="_blank">here</a>
+* Make sure you have converted the weights by running:  `python convert.py yolov3-custom-for-project.cfg yolov3.weights model_data/yolo-custom-for-project.h5` (i.e. for config update the `filters` in CNN layer above `[yolo]`s and `classes` in `[yolo]`'s to class number)
+
 1. Generate your own annotation file and class names file.  
     One row for one image;  
     Row format: `image_file_path box1 box2 ... boxN`;  
     Box format: `x_min,y_min,x_max,y_max,class_id` (no space).  
     For VOC dataset, try `python voc_annotation.py`  
-    Here is an example:
+    Here is an example of the output:
     ```
     path/to/img1.jpg 50,100,150,200,0 30,50,200,120,3
     path/to/img2.jpg 120,300,250,600,2

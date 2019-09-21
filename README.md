@@ -49,7 +49,7 @@ This codebase has be tested with:
 
 ## Quick Start (Inference Only)
 
-1. `pip install requirements.txt`
+1. `pip install -r requirements.txt`
 2. Download YOLOv3 weights from [YOLO website](http://pjreddie.com/darknet/yolo/).
 3. Convert the Darknet YOLO model to a Keras model.
 4. Run YOLO detection.

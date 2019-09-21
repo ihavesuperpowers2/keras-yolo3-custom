@@ -49,13 +49,14 @@ This codebase has be tested with:
 
 ## Quick Start (Inference Only)
 
-1. Download YOLOv3 weights from [YOLO website](http://pjreddie.com/darknet/yolo/).
-2. Convert the Darknet YOLO model to a Keras model.
-3. Run YOLO detection.
+1. `pip install requirements.txt`
+2. Download YOLOv3 weights from [YOLO website](http://pjreddie.com/darknet/yolo/).
+3. Convert the Darknet YOLO model to a Keras model.
+4. Run YOLO detection.
 
 ```
 wget https://pjreddie.com/media/files/yolov3.weights
-python convert.py yolov3.cfg yolov3.weights model_data/yolo.h5
+python convert.py experiment/yolov3.cfg yolov3.weights model_data/yolo.h5
 ```
 
 > For tiny YOLOv3 download the weights from:  https://pjreddie.com/media/files/yolov3-tiny.weights
@@ -83,6 +84,8 @@ usage: yolo_video.py [-h] [--model_path MODEL_PATH]
   --input [INPUT]       Video input path
   --output [OUTPUT]     [Optional] Video output path
 ```
+
+e.g.  `python yolo_video.py --model_path model_data/yolo.h5 --anchors model_data/yolo_anchors.txt --classes_path model_data/coco_classes.txt`
 
 > For Tiny YOLOv3, just do in a similar way, except with tiny YOLOv3, converted weights.
 

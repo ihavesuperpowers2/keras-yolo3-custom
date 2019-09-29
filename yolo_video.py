@@ -52,7 +52,7 @@ if __name__ == '__main__':
     Command line positional arguments -- for video detection mode
     '''
     parser.add_argument(
-        "--input", nargs='?', type=str,required=False,default=0,
+        "--input", nargs='?', type=str,required=False,default="0",
         help = "Video input path"
     )
 
@@ -72,6 +72,6 @@ if __name__ == '__main__':
             print(" Ignoring remaining command line arguments: " + FLAGS.input + "," + FLAGS.output)
         detect_img(YOLO(**vars(FLAGS)))
     elif "input" in FLAGS:
-        detect_video(YOLO(**vars(FLAGS)), FLAGS.input, FLAGS.output)
+        detect_video(YOLO(**vars(FLAGS)), video_path=FLAGS.input, output_path=FLAGS.output)
     else:
-        print("Must specify at least video_input_path.  See usage with --help.")
+        print("Must specify at least --input.  See usage with --help.")

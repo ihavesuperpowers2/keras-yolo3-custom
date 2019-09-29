@@ -25,7 +25,7 @@ class YOLO(object):
         "classes_path": 'model_data/coco_classes.txt',
         "score" : 0.3,
         "iou" : 0.45,
-        "model_image_size" : (416, 416),
+        "model_image_size" : (608, 608), # 608 for full yolo, 416 for tiny
         "gpu_num" : 1,
     }
 
@@ -67,7 +67,7 @@ class YOLO(object):
         num_classes = len(self.class_names)
         is_tiny_version = num_anchors==6 # default setting
         if not is_tiny_version:
-            self.yolo_model = load_model(model_path, compile=False)
+            self.yolo_model = yolo_body(Input(shape=(None, None, 3)), 3, num_classes)
         else:
             self.yolo_model = tiny_yolo_body(Input(shape=(None, None, 3)), num_anchors//2, num_classes)         
         self.yolo_model.load_weights(self.model_path) # make sure model, anchors and classes match
@@ -168,8 +168,12 @@ class YOLO(object):
     def close_session(self):
         self.sess.close()
 
-def detect_video(yolo, video_path=0, output_path=""):
+def detect_video(yolo, video_path="0", output_path=""):
     import cv2
+    # Sometimes the video path will be integers (e.g. 0 on macos), 
+    # sometimes string e.g. "video0" on linux
+    if video_path.isdigit():
+        video_path = int(video_path)
     vid = cv2.VideoCapture(video_path)
     if not vid.isOpened():
         raise IOError("Couldn't open webcam or video")

@@ -85,8 +85,8 @@ def _main(args):
     cfg_parser.read_file(unique_config_file)
 
     print('Creating Keras model.')
-    # input_layer = Input(shape=(None, None, 3))
-    input_layer = Input(shape=(416, 416, 3))
+    input_layer = Input(shape=(None, None, 3)) # placeholder
+    # input_layer = Input(shape=(416, 416, 3)) # 416 is tiny, 608 is full
 
     prev_layer = input_layer
     all_layers = []

@@ -52,7 +52,7 @@ Or, on linux:  `wget https://pjreddie.com/media/files/yolov3.weights`
 
   * To convert the darknet format of weights to Keras format, make sure you have run the following using the proper config file
 
-      `python convert.py -w yolov3.cfg yolov3.weights yolo_weights.h5`
+      `python convert.py -w experiment/yolov3.cfg yolov3.weights yolo_weights.h5`
 
 4. Run YOLO detection with `yolo_video.py`.
 
@@ -83,7 +83,7 @@ usage: yolo_video.py [-h] [--model_path MODEL_PATH]
 
 For examples, see below in [Use model](#use-model).
 
-e.g.  `python yolo_video.py --model_path model_data/yolo.h5 --anchors model_data/yolo_anchors.txt --classes_path model_data/coco_classes.txt`
+Simple example for built-in webcam:  `python yolo_video.py --model_path yolo_weights.h5 --anchors model_data/yolo_anchors.txt --classes_path model_data/coco_classes.txt`
 
 > For Tiny YOLOv3, just do in a similar way, except with tiny YOLOv3, converted weights.
 

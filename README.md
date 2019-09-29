@@ -37,29 +37,25 @@ Using this repo you will perform some or all of the following:
 * Train a model on custom data using the converted custom Darknet model in Keras format (`.h5`)
 * Perform inference on custom model
 
-## System
-
-This codebase has be tested with:
-
-- CUDA 9.0
-- cuDNN 7.1
-- Windows 10
-- NVIDIA GPU GTX 1060
-- Anaconda Python 3.6
-
 ## Quick Start (Inference Only)
 
 1. `pip install -r requirements.txt`
-2. Download YOLOv3 weights from [YOLO website](http://pjreddie.com/darknet/yolo/).
-3. Convert the Darknet YOLO model to a Keras model.
-4. Run YOLO detection.
+2. Download YOLOv3 weights.
 
-```
-wget https://pjreddie.com/media/files/yolov3.weights
-python convert.py experiment/yolov3.cfg yolov3.weights model_data/yolo.h5
-```
+Download full-sized YOLOv3 here:  https://pjreddie.com/media/files/yolov3.weights
 
-> For tiny YOLOv3 download the weights from:  https://pjreddie.com/media/files/yolov3-tiny.weights
+Or, on linux:  `wget https://pjreddie.com/media/files/yolov3.weights`
+
+  * If the tiny version of the weights are needed, download this file:  https://pjreddie.com/media/files/yolov3-tiny.weights
+
+3. Convert the Darknet YOLOv3 model to a Keras model.
+
+  * To convert the darknet format of weights to Keras format, make sure you have run the following using the proper config file
+
+      `python convert.py -w yolov3.cfg yolov3.weights yolo_weights.h5`
+
+4. Run YOLO detection with `yolo_video.py`.
+
 
 Run on video or image file:
 
@@ -85,6 +81,8 @@ usage: yolo_video.py [-h] [--model_path MODEL_PATH]
   --output [OUTPUT]     [Optional] Video output path
 ```
 
+For examples, see below in [Use model](#use-model).
+
 e.g.  `python yolo_video.py --model_path model_data/yolo.h5 --anchors model_data/yolo_anchors.txt --classes_path model_data/coco_classes.txt`
 
 > For Tiny YOLOv3, just do in a similar way, except with tiny YOLOv3, converted weights.
@@ -95,7 +93,18 @@ e.g.  `python yolo_video.py --model_path model_data/yolo.h5 --anchors model_data
 
 ## Data Prep
 
-Use the VoTT (<a href="https://github.com/Microsoft/VoTT">link</a>) labeling tool if using custom data and export to **Tensorflow Pascal VOC**.
+1. Use the VoTT (<a href="https://github.com/Microsoft/VoTT">link</a>) labeling tool if using custom data and export to **Tensorflow Pascal VOC**.
+
+You should get some name of a folder followed by `_output`.  It will have three subfolders
+```
+/Annotations
+/ImageSets
+/JPEGImages
+```
+
+2. Rename the `xyz_output` folder to `data`.
+
+3. Copy `data` to the base of this repo.
 
 ## Training
 
@@ -104,11 +113,15 @@ IMPORTANT NOTES:
 * Make sure you have set up the config `.cfg` file correctly (`filters` and `classes`) - more information on how to do this <a href="https://github.com/AlexeyAB/darknet#how-to-train-to-detect-your-custom-objects" target="_blank">here</a>
 * Make sure you have converted the weights by running:  `python convert.py yolov3-custom-for-project.cfg yolov3.weights model_data/yolo-custom-for-project.h5` (i.e. for config update the `filters` in CNN layer above `[yolo]`s and `classes` in `[yolo]`'s to class number)
 
-1. Generate your own annotation file and class names file.  
-    One row for one image;  
-    Row format: `image_file_path box1 box2 ... boxN`;  
-    Box format: `x_min,y_min,x_max,y_max,class_id` (no space).  
-    For VOC dataset, try `python voc_annotation.py`  
+1. Generate your own annotation file and class names file in the following format with `voc_annotation.py` described below.
+
+    * It should generate one row for each image, e.g.:  `image_file_path x_min,y_min,x_max,y_max,class_id`.
+
+Generate this file with `voc_annotation.py`.  This script takes all of the `Annotations` and `ImageSets` (classes with val and train) and converts them into one file.  The final text file will then be used by the training script.
+
+  * Modify the `sets` and `classes` appropriately within `voc_annotation.py`
+  * Run with `python voc_annotation.py`
+
     Here is an example of the output:
     ```
     path/to/img1.jpg 50,100,150,200,0 30,50,200,120,3
@@ -116,13 +129,17 @@ IMPORTANT NOTES:
     ...
     ```
 
-* To get the necessary annotation files `voc_annotation.py` was used and then the files to be used for train were combined into one file, e.g. as in the `example_label_list.txt`.
-
 2. To convert the darknet format of weights to Keras format, make sure you have run the following using the proper config file
 
-`python convert.py -w yolov3.cfg yolov3.weights model_data/yolo_weights.h5`  
+    `python convert.py -w yolov3.cfg yolov3.weights yolo_weights.h5`  
 
-  * The file model_data/yolo_weights.h5 is, next in training, used to load pretrained weights.
+  * The file `yolo_weights.h5` is, next in training, used to load pretrained weights.
+
+3.  Calculate the appropriate achor box sizes with `kmeans.py` using the training annotation file output from `voc_annotation.py` as the `--annot_file`.
+
+    `python kmeans.py --annot_file project/train.txt --out_file project/custom_anchors.txt --num_clusters 9`
+
+    * Note, for  `--num_clusters`, use 9 for full YOLOv3 and 6 for tiny YOLOv3.
 
 3. Train with `train.py` with the following script arguments:
 
@@ -148,7 +165,29 @@ Note, if you want to use original pretrained weights for YOLOv3:
 1. `wget https://pjreddie.com/media/files/darknet53.conv.74`  
 2. rename it as darknet53.weights  
 3. `python convert.py -w darknet53.cfg darknet53.weights model_data/darknet53_weights.h5`  
-4. use model_data/darknet53_weights.h5 in train.py
+4. use model_data/darknet53_weights.h5 in `train.py`
+
+## Use Model
+
+### Inference on an image
+
+In addition to other arguments, use `--image`
+
+Example:  `python yolo_video.py --model_path trained_weights_final.h5 --anchors model_data/custom_anchors.txt --classes_path model_data/custom_classes.txt --image`
+
+### Inference on video from a webcam
+
+Note:  on linux `video0` is usually the built-in camera (if this exists) and a USB camera may be used so look for `video1` etc.  (if there is not camera, then `video0` is usually USB cam).  On MacOS, use for `--input` 0, for built-in, and 1 for USB.  This should be the same on Windows.
+
+In addition to other arguments, use `--input <video device id>`
+
+Example:  `python yolo_video.py --model_path trained_weights_final.h5 --anchors model_data/custom_anchors.txt --classes_path model_data/custom_classes.txt --input 0`
+
+### Inference on video file and output to a video file
+
+In addition to other arguments, use `--input <video file name> --output xyz.mov`
+
+Example:  `python yolo_video.py --model_path trained_weights_final.h5 --anchors model_data/custom_anchors.txt --classes_path model_data/custom_classes.txt --input <path to video>/some_street_traffic.mov --output some_street_traffic_with_bboxes.mov`
 
 ---
 

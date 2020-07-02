@@ -2,9 +2,19 @@ import sys
 import argparse
 from yolo import YOLO, detect_video
 from PIL import Image
-
+from matplotlib.pyplot import imshow
+import numpy as np
+import os
 def detect_img(yolo):
-    while True:
+    output_path = 'result'
+    if not os.path.exists(output_path):
+        print('Creating output path {}'.format(output_path))
+        os.mkdir(output_path)
+
+    
+    i = 1
+    while i > 0:
+
         img = input('Input image filename:')
         try:
             image = Image.open(img)
@@ -13,9 +23,11 @@ def detect_img(yolo):
             continue
         else:
             r_image = yolo.detect_image(image)
-            r_image.show()
-    yolo.close_session()
+            imshow(np.asarray(r_image))
+            r_image.save(os.path.join(output_path, img), quality=90)
 
+        i = i - 1
+    yolo.close_session()
 FLAGS = None
 
 if __name__ == '__main__':
